@@ -1,1 +1,56 @@
-﻿# .env, .venv, data 등 제외
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual env
+.venv/
+venv/
+
+# Environment variables
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Byte-compiled
+*.sqlite3
+*.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# RAG 데이터 (민감정보 & 용량 큼)
+rag/data/*.jsonl
+rag/data/*.json
+rag/data/*.parquet
+rag/data/*.csv
+
+# Whisper / OCR / Model cache
+models/
+*.bin
+*.pt
+*.onnx
+
+# Gradio temp
+gradio_cached_examples/
+gradio_tmp/
+
+# Test output
+tests/sample_inputs/*
+!.gitkeep
