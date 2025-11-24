@@ -1,46 +1,31 @@
-﻿# Core
-python-dotenv
-pydantic
-requests
-tqdm
+﻿fastapi==0.110.0
+uvicorn[standard]==0.29.0
 
-# LLM / OpenAI
-openai>=1.3.0
+openai==1.51.0
+langchain==0.2.14
+tiktoken==0.7.0
 
-# OpenSearch
-opensearch-py>=2.4.2
+opensearch-py==2.4.2
+boto3==1.34.0
+requests-aws4auth==1.1.2
 
-# Vector Embeddings
-numpy
-scikit-learn
+python-dotenv==1.0.1
+pydantic==2.7.1
+requests==2.32.3
 
-# RAG Helpers
-sentencepiece
-rank-bm25
-faiss-cpu
+# OCR 안 쓸 거면 paddleocr / paddlepaddle 전부 제거
+# paddleocr==2.7.0
+# paddlepaddle==2.6.2
 
-# Rerankers (선택)
-transformers
-torch
+gradio==4.44.0
 
-# LangChain / LangGraph
-langchain
-langchain-openai
-langgraph
-langsmith
+loguru==0.7.2
 
-# STT (Whisper)
-whisper
-soundfile
+pyjwt==2.8.0
+passlib[bcrypt]==1.7.4
 
-# OCR
-paddlepaddle
-paddleocr
+Pillow==10.3.0
 
-# Gradio
-gradio>=4.0
+pytest==8.2.2
 
-# Utils
-uvicorn
-fastapi
-python-multipart
+httpx==0.27.2

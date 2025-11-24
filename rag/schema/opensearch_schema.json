@@ -1,1 +1,33 @@
-﻿# 인덱스 매핑/세팅 정의
+﻿{
+  "settings": {
+    "index": {
+      "knn": true,
+      "knn.algo_param.ef_search": 100
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id":          { "type": "keyword" },
+      "doc_type":    { "type": "keyword" },
+      "category_top":{ "type": "keyword" },
+      "item_seq":    { "type": "keyword" },
+      "topic":       { "type": "keyword" },
+      "departments": { "type": "keyword" },
+      "src_id":      { "type": "keyword" },
+      "entity_1":    { "type": "keyword" },
+      "entity_2":    { "type": "keyword" },
+
+      "drug_name_kor":    { "type": "text" },
+      "drug_name_eng":    { "type": "text" },
+      "excipients":       { "type": "text" },
+      "title":            { "type": "text" },
+      "disease_name_kor": { "type": "text" },
+      "disease_name_eng": { "type": "text" },
+
+      "embedding": {
+        "type": "knn_vector",
+        "dimension": 3072
+      }
+    }
+  }
+}
