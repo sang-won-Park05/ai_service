@@ -1,51 +1,38 @@
-﻿# ai_service/llm/utils/routers.py
-from typing import List, Dict, Any, Optional
+﻿# ai_service/llm/routers.py
+from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from typing import Literal
 
-from .graph_orchestrator import run_chat_flow
+RouteType = Literal["non_medical", "candidate_medical"]
 
-router = APIRouter(prefix="/chatbot", tags=["chatbot"])
-
-
-class ChatHistoryMessage(BaseModel):
-    role: str  # "user" | "assistant"
-    content: str
+# 완전한 잡담/인사에만 쓰는 키워드 (→ RAG 스킵)
+SMALLTALK_KEYWORDS = [
+    "하잉", "하이", "ㅎㅇ", "안녕", "안뇽",
+    "hello", "hi", "hey", "ㅎㅇㅎㅇ",
+]
 
 
-class ChatRequest(BaseModel):
-    query: str
-    user_id: Optional[str] = None
-    history: Optional[List[ChatHistoryMessage]] = None
-    user_profile: Optional[Dict[str, Any]] = None
+def route_query(query: str) -> RouteType:
+    """
+    1차 라우터 (LLM 호출 없음)
 
+    - non_medical:
+        완전한 인사/잡담으로만 보이는 질문.
+        → 이 루트로 가면 절대 '의료'로 승격되지 않는다.
+        → 임베딩/검색(RAG)도 전혀 돌리지 않는다.
 
-class ChatResponse(BaseModel):
-    answer: str
-    citations: List[Dict[str, Any]]
-    debug: Dict[str, Any]
+    - candidate_medical:
+        그 외 모든 질문 (애매하거나 의료 가능성이 있는 것들).
+        → RAG + 의료 프롬프트를 태우고,
+          LLM이 최종적으로 의료/비의료 여부를 판단한다.
+    """
+    text = (query or "").strip().lower()
+    if not text:
+        return "candidate_medical"
 
+    # 진짜 인사/잡담이면 non_medical
+    if any(kw in text for kw in SMALLTALK_KEYWORDS):
+        return "non_medical"
 
-@router.post("/query", response_model=ChatResponse)
-async def chatbot_query(payload: ChatRequest) -> ChatResponse:
-    if not payload.query:
-        raise HTTPException(status_code=400, detail="query is required")
-
-    history_dicts = (
-        [m.model_dump() for m in payload.history] if payload.history else []
-    )
-
-    result = run_chat_flow(
-        query=payload.query,
-        user_id=payload.user_id,
-        history=history_dicts,
-        user_profile=payload.user_profile,
-    )
-
-    return ChatResponse(**result)
-
-
-@router.get("/health")
-async def health_check():
-    return {"status": "ok"}
+    # 나머지는 다 의료 후보
+    return "candidate_medical"

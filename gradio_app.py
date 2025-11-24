@@ -6,6 +6,7 @@ import gradio as gr
 
 from llm.graph_orchestrator import run_chat_flow
 from llm.telemetry import trace_context, log_info
+from llm.utils.user_profile import load_user_profile   # ✅ 사용자 프로필 로더 추가
 
 
 APP_TITLE = "MediNote Chat (RAG Demo)"
@@ -20,7 +21,7 @@ APP_DESCRIPTION = (
 # =========================
 def gradio_chat(
     message: str,
-    history: List[Dict[str, str]],   # ✅ 이제 history는 messages 형식 (dict 리스트)
+    history: List[Dict[str, str]],   # history: [{"role": "...", "content": "..."} ...]
     user_id: str,
 ) -> Tuple[str, List[Dict[str, str]]]:
     """
@@ -28,29 +29,46 @@ def gradio_chat(
 
     - message: 사용자가 방금 입력한 질문
     - history: [{"role": "user"/"assistant", "content": "..."}, ...]
+    - user_id: Gradio 입력 박스에 적힌 사용자 ID (테스트 시 문자열)
     """
     if not message:
         return "", history
 
-    # Gradio history 형식 == orchestrator history 형식과 동일하므로 그대로 사용
+    # 1) Gradio 히스토리 그대로 사용 (이미 messages 형식)
     internal_history = history
+
+    # 2) 테스트용 numeric user_id 만들기
+    #    - 숫자만 들어오면 그걸 사용
+    #    - 아니면 기본값 1로 고정
+    try:
+        numeric_user_id = int(user_id)
+    except (TypeError, ValueError):
+        numeric_user_id = 1
+
+    # 3) PostgreSQL에서 사용자 프로필 로드
+    #    (app_user + user_chronic_disease + user_allergy)
+    user_profile = load_user_profile(numeric_user_id)
 
     with trace_context(
         name="gradio_chat_request",
         run_type="chain",
-        inputs={"query": message, "user_id": user_id},
+        inputs={"query": message, "user_id": numeric_user_id},
         tags=["gradio"],
         metadata={},
     ):
         result = run_chat_flow(
             query=message,
-            user_id=user_id or None,
+            user_id=str(numeric_user_id),
             history=internal_history,
-            user_profile=None,
+            user_profile=user_profile,   # ✅ LLM 쪽으로 전달
         )
 
     answer = result.get("answer", "")
-    log_info("gradio_chat_completed", user_id=user_id, answer_preview=answer[:50])
+    log_info(
+        "gradio_chat_completed",
+        user_id=str(numeric_user_id),
+        answer_preview=answer[:50],
+    )
 
     # ✅ messages 형식으로 새 턴 추가
     new_history = history + [
@@ -78,11 +96,10 @@ def create_demo() -> gr.Blocks:
         with gr.Row():
             user_id_box = gr.Textbox(
                 label="User ID",
-                value="demo-user",
+                value="1",                 # ✅ 테스트용 기본값 1
                 placeholder="사용자 ID (로그/추적용)",
             )
 
-        # ✅ type 지정 안 하면 기본이 messages 형식
         chatbot = gr.Chatbot(
             label="MediNote Chat",
             height=500,
